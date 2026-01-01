@@ -4,11 +4,59 @@ static void SystemClock_Config(void);
 
 int main(void){
 
-  HAL_Init();
-  SystemClock_Config();
+  // Inicia a Hal e Configura os clocks
+  HAL_Init();                                             
+  SystemClock_Config();                                   
 
-  while (1)
-  {
+  // Habilita o Clock de GPIOA
+  __HAL_RCC_GPIOA_CLK_ENABLE();                           
+
+  GPIO_InitTypeDef GPIO_InitStructPA3 = {0};              // Define a Struct do pino com as configs
+  GPIO_InitStructPA3.Pin = GPIO_PIN_3;                    // Número do Pino
+  GPIO_InitStructPA3.Mode = GPIO_MODE_INPUT;              // Tipo da saída PushPull
+  GPIO_InitStructPA3.Pull = GPIO_NOPULL;                  // Desativa Resistor Interno
+  GPIO_InitStructPA3.Speed = GPIO_SPEED_FAST;             
+
+
+  GPIO_InitTypeDef GPIO_InitStructPA2 = {0};
+  GPIO_InitStructPA2.Pin = GPIO_PIN_2;
+  GPIO_InitStructPA2.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructPA2.Pull = GPIO_NOPULL;
+  GPIO_InitStructPA2.Speed = GPIO_SPEED_FAST;
+
+
+  GPIO_InitTypeDef GPIO_InitStructPA4 = {0};              
+  GPIO_InitStructPA4.Pin = GPIO_PIN_4;                    
+  GPIO_InitStructPA4.Mode = GPIO_MODE_INPUT;              
+  GPIO_InitStructPA4.Pull = GPIO_NOPULL;                  
+  GPIO_InitStructPA4.Speed = GPIO_SPEED_FAST;             
+
+
+  GPIO_InitTypeDef GPIO_InitStructPA5 = {0};
+  GPIO_InitStructPA5.Pin = GPIO_PIN_5;
+  GPIO_InitStructPA5.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructPA5.Pull = GPIO_NOPULL;
+  GPIO_InitStructPA5.Speed = GPIO_SPEED_FAST;
+
+  // Ativa os Pinos
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA3);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA2);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA4);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA5);
+
+  while (1){
+
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3)){
+    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+    }else if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4)){
+    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+    }else {
+    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+    }
+
+
 
   }
 
