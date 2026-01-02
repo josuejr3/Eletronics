@@ -18,28 +18,18 @@ int main(void){
 
   // Começa a geração de sinal PWM
   HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_1);
+
 
   while (1){
 
-
-    for (int duty = 0; duty < 100; duty++){
-
-      // Ajusta a largura do pulso do timer 5 do canal 3 baseado no duty
-      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, duty);
-      HAL_Delay(20);
-    }
-
-
-    for (int duty = 99; duty >= 0; duty--){
-
-      // Ajusta a largura do pulso do timer 5 do canal 3 baseado no duty
-      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, duty);
-      HAL_Delay(20);
-    }
-
-
-
-
+	  for(uint8_t i = 0; i <= 99; i++){
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_1, i);         // Red aumenta
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_2, 99 - i);    // Green diminui
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, (i/2));     // Blue aumenta mais devagar
+	      HAL_Delay(20);                                           // fade suave
+	  }
 
   }
 
@@ -104,7 +94,7 @@ static void MX_GPIO_Init(void){
 
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_0 | GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
@@ -116,7 +106,9 @@ static void MX_GPIO_Init(void){
 
 static void MX_TIM5_Init(void){
 
-  TIM_OC_InitTypeDef configTim5 = {0};
+  TIM_OC_InitTypeDef configTim5CH3 = {0};
+  TIM_OC_InitTypeDef configTim5CH2 = {0};
+  TIM_OC_InitTypeDef configTim5CH1 = {0};
 
   __HAL_RCC_TIM5_CLK_ENABLE();
 
@@ -129,13 +121,28 @@ static void MX_TIM5_Init(void){
 
   HAL_TIM_PWM_Init(&hTim5);
 
-  configTim5.OCMode = TIM_OCMODE_PWM1;
-  configTim5.Pulse = 30; // 30% de duty cycle;
-  configTim5.OCPolarity = TIM_OCPOLARITY_HIGH;
-  configTim5.OCFastMode = TIM_OCFAST_DISABLE;
+  configTim5CH3.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH3.Pulse = 30; // 30% de duty cycle;
+  configTim5CH3.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH3.OCFastMode = TIM_OCFAST_DISABLE;
 
-  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5, TIM_CHANNEL_3);
+  configTim5CH2.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH2.Pulse = 20; // 30% de duty cycle;
+  configTim5CH2.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH2.OCFastMode = TIM_OCFAST_DISABLE;
+
+  configTim5CH1.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH1.Pulse = 10; // 30% de duty cycle;
+  configTim5CH1.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH1.OCFastMode = TIM_OCFAST_DISABLE;
+
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH3, TIM_CHANNEL_3);
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH2, TIM_CHANNEL_2);
 
 }
+
+
+
 
 // https://chatgpt.com/share/6954b373-d268-8008-a737-1e3ec2b70576 - Como ativar IntelliSense STM32 VSCode
