@@ -1,60 +1,43 @@
 #include "main.h"
 
 static void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_TIM5_Init(void);
+
+TIM_HandleTypeDef hTim5;
 
 int main(void){
 
   // Inicia a Hal e Configura os clocks
   HAL_Init();                                             
-  SystemClock_Config();                                   
+  SystemClock_Config();    
+  
+  // Configurações de Pinos
+  MX_GPIO_Init();
+  MX_TIM5_Init();
 
-  // Habilita o Clock de GPIOA
-  __HAL_RCC_GPIOA_CLK_ENABLE();                           
-
-  GPIO_InitTypeDef GPIO_InitStructPA3 = {0};              // Define a Struct do pino com as configs
-  GPIO_InitStructPA3.Pin = GPIO_PIN_3;                    // Número do Pino
-  GPIO_InitStructPA3.Mode = GPIO_MODE_INPUT;              // Tipo da saída PushPull
-  GPIO_InitStructPA3.Pull = GPIO_NOPULL;                  // Desativa Resistor Interno
-  GPIO_InitStructPA3.Speed = GPIO_SPEED_FAST;             
-
-
-  GPIO_InitTypeDef GPIO_InitStructPA2 = {0};
-  GPIO_InitStructPA2.Pin = GPIO_PIN_2;
-  GPIO_InitStructPA2.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructPA2.Pull = GPIO_NOPULL;
-  GPIO_InitStructPA2.Speed = GPIO_SPEED_FAST;
-
-
-  GPIO_InitTypeDef GPIO_InitStructPA4 = {0};              
-  GPIO_InitStructPA4.Pin = GPIO_PIN_4;                    
-  GPIO_InitStructPA4.Mode = GPIO_MODE_INPUT;              
-  GPIO_InitStructPA4.Pull = GPIO_NOPULL;                  
-  GPIO_InitStructPA4.Speed = GPIO_SPEED_FAST;             
-
-
-  GPIO_InitTypeDef GPIO_InitStructPA5 = {0};
-  GPIO_InitStructPA5.Pin = GPIO_PIN_5;
-  GPIO_InitStructPA5.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructPA5.Pull = GPIO_NOPULL;
-  GPIO_InitStructPA5.Speed = GPIO_SPEED_FAST;
-
-  // Ativa os Pinos
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA3);
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA2);
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA4);
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStructPA5);
+  // Começa a geração de sinal PWM
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_3);
 
   while (1){
 
-    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3)){
-    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
-    }else if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4)){
-    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-    }else {
-    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
-    	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
+    for (int duty = 0; duty < 100; duty++){
+
+      // Ajusta a largura do pulso do timer 5 do canal 3 baseado no duty
+      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, duty);
+      HAL_Delay(20);
     }
+
+
+    for (int duty = 99; duty >= 0; duty--){
+
+      // Ajusta a largura do pulso do timer 5 do canal 3 baseado no duty
+      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, duty);
+      HAL_Delay(20);
+    }
+
+
 
 
 
@@ -109,6 +92,49 @@ static void SystemClock_Config(void){
   {
     Error_Handler();
   }
+
+}
+
+
+// Função para configuração de GPIOs
+static void MX_GPIO_Init(void){
+
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;  
+
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
+
+static void MX_TIM5_Init(void){
+
+  TIM_OC_InitTypeDef configTim5 = {0};
+
+  __HAL_RCC_TIM5_CLK_ENABLE();
+
+  hTim5.Instance = TIM5;
+  hTim5.Init.Prescaler = 419;
+  hTim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  hTim5.Init.Period = 99;
+  hTim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  hTim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+
+  HAL_TIM_PWM_Init(&hTim5);
+
+  configTim5.OCMode = TIM_OCMODE_PWM1;
+  configTim5.Pulse = 30; // 30% de duty cycle;
+  configTim5.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5.OCFastMode = TIM_OCFAST_DISABLE;
+
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5, TIM_CHANNEL_3);
 
 }
 
