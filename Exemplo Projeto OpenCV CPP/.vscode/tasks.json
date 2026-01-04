@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compilar OpenCV",
+            "type": "shell",
+            "command": "cl.exe",
+            "args": [
+                "main.cpp",
+                "/I", "C:\\vcpkg\\installed\\x64-windows\\include",
+                "/I", "C:\\vcpkg\\installed\\x64-windows\\include\\opencv4",
+                "/EHsc",
+                "/link",
+                "C:\\vcpkg\\installed\\x64-windows\\lib\\opencv_core412.lib",
+                "C:\\vcpkg\\installed\\x64-windows\\lib\\opencv_imgproc412.lib",
+                "C:\\vcpkg\\installed\\x64-windows\\lib\\opencv_highgui412.lib",
+                "C:\\vcpkg\\installed\\x64-windows\\lib\\opencv_imgcodecs412.lib"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        }
+    ]
+}

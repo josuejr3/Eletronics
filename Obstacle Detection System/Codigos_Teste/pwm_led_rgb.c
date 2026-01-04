@@ -1,5 +1,4 @@
 #include "main.h"
-#include "Utility.h"
 
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -9,24 +8,28 @@ TIM_HandleTypeDef hTim5;
 
 int main(void){
 
+  // Inicia a Hal e Configura os clocks
   HAL_Init();                                             
   SystemClock_Config();    
   
   // Configurações de Pinos
   MX_GPIO_Init();
-  //MX_TIM5_Init();
+  MX_TIM5_Init();
 
-  Utility_Init();
-  USART1_Init();
+  // Começa a geração de sinal PWM
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&hTim5, TIM_CHANNEL_1);
+
 
   while (1){
 
-    if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_7) == GPIO_PIN_SET){
-      printf("BARULHO DETECTADO \n\n");
-    } else{
-        printf("SILENCIO \n\n");
-    }
-    HAL_Delay(500);
+	  for(uint8_t i = 0; i <= 99; i++){
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_1, i);         // Red aumenta
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_2, 99 - i);    // Green diminui
+	      __HAL_TIM_SET_COMPARE(&hTim5, TIM_CHANNEL_3, (i/2));     // Blue aumenta mais devagar
+	      HAL_Delay(20);                                           // fade suave
+	  }
 
   }
 
@@ -86,30 +89,57 @@ static void SystemClock_Config(void){
 // Função para configuração de GPIOs
 static void MX_GPIO_Init(void){
 
-  GPIO_InitTypeDef SensorVib = {0};
-  GPIO_InitTypeDef Buzzer = {0};
 
-  __HAL_RCC_GPIOE_CLK_ENABLE();
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  SensorVib.Pin = GPIO_PIN_7;
-  SensorVib.Mode = GPIO_MODE_INPUT;
-  SensorVib.Pull = GPIO_NOPULL;
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  HAL_GPIO_Init(GPIOE, &SensorVib);
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_0 | GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;  
 
-  Buzzer.Pin = GPIO_PIN_8;
-  Buzzer.Mode = GPIO_MODE_OUTPUT_PP;
-  Buzzer.Pull = GPIO_NOPULL;
-  Buzzer.Speed = GPIO_SPEED_FAST;
-
-  HAL_GPIO_Init(GPIOE, &Buzzer);
-
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 
 static void MX_TIM5_Init(void){
-  //
-}
 
+  TIM_OC_InitTypeDef configTim5CH3 = {0};
+  TIM_OC_InitTypeDef configTim5CH2 = {0};
+  TIM_OC_InitTypeDef configTim5CH1 = {0};
+
+  __HAL_RCC_TIM5_CLK_ENABLE();
+
+  hTim5.Instance = TIM5;
+  hTim5.Init.Prescaler = 419;
+  hTim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  hTim5.Init.Period = 99;
+  hTim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  hTim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+
+  HAL_TIM_PWM_Init(&hTim5);
+
+  configTim5CH3.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH3.Pulse = 30; // 30% de duty cycle;
+  configTim5CH3.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH3.OCFastMode = TIM_OCFAST_DISABLE;
+
+  configTim5CH2.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH2.Pulse = 20; // 30% de duty cycle;
+  configTim5CH2.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH2.OCFastMode = TIM_OCFAST_DISABLE;
+
+  configTim5CH1.OCMode = TIM_OCMODE_PWM1;
+  configTim5CH1.Pulse = 10; // 30% de duty cycle;
+  configTim5CH1.OCPolarity = TIM_OCPOLARITY_HIGH;
+  configTim5CH1.OCFastMode = TIM_OCFAST_DISABLE;
+
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH3, TIM_CHANNEL_3);
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_ConfigChannel(&hTim5, &configTim5CH2, TIM_CHANNEL_2);
+
+}
 
 // https://chatgpt.com/share/6954b373-d268-8008-a737-1e3ec2b70576 - Como ativar IntelliSense STM32 VSCode
